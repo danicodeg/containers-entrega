@@ -1,3 +1,4 @@
+from datetime import timedelta
 import re
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, ValidationError
@@ -83,6 +84,9 @@ class Container(models.Model):
         store=True,
     )
     return_date = fields.Date(string="Fecha de devolución")
+    
+    free_time_end_date = fields.Date(string="Último día libre", compute="_compute_free_time_end_date", search="_search_free_time_end_date",)
+    
     correction_ids = fields.One2many(
         "containers.container.correction",
         "container_id",
@@ -191,7 +195,30 @@ class Container(models.Model):
                 reverse=True,
             )[:1]
             container.approved_return_date = latest.corrected_return_date 
-                      
+            
+    @api.depends("discharge_date", "free_days", "calculation_ok")
+    
+    def _compute_free_time_end_date(self):
+        for container in self:
+            if container.discharge_date and container.calculation_ok:
+                container.free_time_end_date = (
+                    container.discharge_date
+                    + timedelta(days=container.free_days - 1)
+                )
+            else:
+                container.free_time_end_date = False
+
+    def _search_free_time_end_date(self, operator, value):
+        comparison_date = fields.Date.to_date(value)
+        candidates = self.search([
+            ("state", "=", "outside"),
+            ("discharge_date", "!=", False),
+        ])
+        matches = candidates.filtered_domain([
+            ("free_time_end_date", operator, comparison_date),
+        ])
+        return [("id", "in", matches.ids)]    
+    
     def action_open_correction(self):
         self.ensure_one()
         self.check_access_rights("read")

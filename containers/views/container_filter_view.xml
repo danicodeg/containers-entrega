@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_container_tracking_tree" model="ir.ui.view">
+        <field name="name">containers.container.tracking.tree</field>
+        <field name="model">containers.container</field>
+        <field name="arch" type="xml">
+            <tree string="Contenedores" create="false" edit="false" delete="false">
+                <field name="name"/>
+                <field name="bill_of_lading_id"/>
+                <field name="container_type"/>
+                <field name="state"/>
+                <field name="discharge_date"/>
+                <field name="free_days"/>
+                <field name="free_time_end_date"/>
+                <field name="return_date"/>
+                <field name="delay_days"/>
+                <field name="calculation_message"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_container_tracking_search" model="ir.ui.view">
+        <field name="name">containers.container.tracking.search</field>
+        <field name="model">containers.container</field>
+        <field name="arch" type="xml">
+            <search string="Buscar contenedores">
+                <field name="name"/>
+                <field name="bill_of_lading_id"/>
+                <filter name="due_soon"
+                        string="Por vencer en los próximos 2 días"
+                        domain="[('state', '=', 'outside'),
+                                 ('free_time_end_date', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                 ('free_time_end_date', '&lt;=', (context_today() + relativedelta(days=2)).strftime('%Y-%m-%d'))]"/>
+                <filter name="overdue_outside"
+                        string="Vencidos y todavía afuera"
+                        domain="[('state', '=', 'outside'),
+                                 ('free_time_end_date', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="returned_not_invoiced"
+                        string="Devueltos sin facturar"
+                        domain="[('state', '=', 'returned')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_container_tracking" model="ir.actions.act_window">
+        <field name="name">Contenedores</field>
+        <field name="res_model">containers.container</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_container_tracking_tree"/>
+        <field name="search_view_id" ref="view_container_tracking_search"/>
+    </record>
+
+    <menuitem id="menu_container_tracking"
+              name="Contenedores"
+              parent="menu_containers_root"
+              action="action_container_tracking"
+              groups="containers.group_container_operations,containers.group_container_billing"/>
+</odoo>
