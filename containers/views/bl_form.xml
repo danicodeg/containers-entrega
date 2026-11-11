@@ -35,6 +35,7 @@
                                     <field name="discharge_date_override"/>
                                     <field name="discharge_date" readonly="1"/>
                                     <field name="return_date"/>
+                                    <field name="state" readonly="1"/>           
                                     <field name="eir_filename" column_invisible="True"/>
                                     <field name="eir_file" filename="eir_filename"/>
                                     <field name="calculation_ok" column_invisible="True"/>
@@ -45,6 +46,12 @@
                                     <field name="shipping_amount_usd" invisible="not calculation_ok"/>
                                     <field name="customer_amount_usd" invisible="not calculation_ok"/>
                                     <field name="is_estimate"/>
+                                    <button name="action_mark_invoiced"
+                                            type="object"
+                                            string="Marcar como facturado"
+                                            groups="containers.group_container_billing"
+                                            invisible="state != 'returned'"
+                                            confirm="¿Confirmas que este contenedor ya fue facturado?"/>
 
                                 </tree>
                             </field>

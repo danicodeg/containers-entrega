@@ -1,6 +1,6 @@
 import re
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 ISO_LETTER_VALUES = dict(zip(
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -21,10 +21,24 @@ class BillOfLading(models.Model):
     container_ids = fields.One2many(
         "containers.container", "bill_of_lading_id", string="Contenedores"
     )
-    
+
     @api.constrains("discharge_date")
     def _check_container_return_dates(self):
         self.mapped("container_ids")._check_return_date()
+
+
+    def write(self, vals):
+        protected_fields = {"customer_id", "shipping_line_id", "discharge_date"}
+        if protected_fields.intersection(vals) and any(
+            self.mapped("container_ids.invoiced_at")
+        ):
+            raise ValidationError(
+                "El BL tiene contenedores facturados. "
+                "Estos datos requieren una corrección autorizada."
+            )
+
+        return super().write(vals)
+
 
 class Container(models.Model):
     _name = "containers.container"
@@ -71,6 +85,31 @@ class Container(models.Model):
     return_date = fields.Date(string="Fecha de devolución")
     eir_file = fields.Binary(string="Comprobante EIR", attachment=True)
     eir_filename = fields.Char(string="Nombre del archivo EIR")
+
+    invoiced_at = fields.Datetime(
+        string="Fecha de facturación",
+        readonly=True,
+        copy=False,
+    )
+
+    invoiced_values = fields.Json(
+        string="Cálculo al facturar",
+        readonly=True,
+        copy=False,
+    )
+
+    state = fields.Selection(
+        [
+            ("pending", "Pendiente de descarga"),
+            ("outside", "Afuera"),
+            ("returned", "Devuelto"),
+            ("invoiced", "Facturado"),
+        ],
+        string="Estado",
+        compute="_compute_state",
+        store=True,
+    )
+
     days_outside = fields.Integer(
         string="Días afuera",
         compute="_compute_demurrage",
@@ -111,7 +150,62 @@ class Container(models.Model):
         string="Aviso de cálculo",
         compute="_compute_demurrage",
     )
-    
+    @api.depends("discharge_date", "return_date", "invoiced_at")
+    def _compute_state(self):
+        for container in self:
+            if container.invoiced_at:
+                container.state = "invoiced"
+            elif container.return_date:
+                container.state = "returned"
+            elif container.discharge_date:
+                container.state = "outside"
+            else:
+                container.state = "pending"
+
+    def action_mark_invoiced(self):
+        self.ensure_one()
+        self.check_access_rights("read")
+        self.check_access_rule("read")
+
+        if not self.env.user.has_group("containers.group_container_billing"):
+            raise AccessError("Solo el grupo de Facturación puede marcar como facturado.")
+
+        if self.state != "returned":
+            raise ValidationError("Solo se puede facturar un contenedor devuelto.")
+
+        values = self._get_demurrage_values()
+        super(Container, self.sudo()).write({
+            "invoiced_at": fields.Datetime.now(),
+            "invoiced_values": values,
+        })
+        return True
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        protected_fields = {"invoiced_at", "invoiced_values"}
+        if any(protected_fields.intersection(vals) for vals in vals_list):
+            raise ValidationError("Usa el botón Marcar como facturado.")
+
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if {"invoiced_at", "invoiced_values"}.intersection(vals):
+            raise ValidationError("Usa el botón Marcar como facturado.")
+
+        protected_fields = {
+            "name",
+            "bill_of_lading_id",
+            "container_type",
+            "discharge_date_override",
+            "return_date",
+        }
+        if protected_fields.intersection(vals) and any(self.mapped("invoiced_at")):
+            raise ValidationError(
+                "Los datos de un contenedor facturado requieren una corrección autorizada."
+            )
+
+        return super().write(vals)
+
     def _get_demurrage_values(self, cutoff_date=None):
         self.ensure_one()
 
@@ -189,6 +283,7 @@ class Container(models.Model):
         }
 
     @api.depends(
+        "invoiced_values",
         "discharge_date",
         "return_date",
         "container_type",
@@ -210,18 +305,22 @@ class Container(models.Model):
                 "calculation_message": False,
             }
 
-            try:
-                calculated_values = container._get_demurrage_values(
-                    cutoff_date=self.env.context.get("demurrage_cutoff_date")
-                )
-            except ValidationError as error:
-                values["calculation_message"] = str(error)
-            else:
-                values.update(calculated_values)
+            if container.invoiced_values:
+                values.update(container.invoiced_values)
                 values["calculation_ok"] = True
+            else:
+                try:
+                    calculated_values = container._get_demurrage_values(
+                        cutoff_date=self.env.context.get("demurrage_cutoff_date")
+                    )
+                except ValidationError as error:
+                    values["calculation_message"] = str(error)
+                else:
+                    values.update(calculated_values)
+                    values["calculation_ok"] = True
 
             container.update(values)
-            
+
     @api.constrains("name")
     def _check_container_number(self):
         for container in self:
@@ -248,7 +347,7 @@ class Container(models.Model):
                     f"El dígito de control de {number} es incorrecto. "
                     f"El dígito esperado es {expected_digit}."
                 )
-    
+
     @api.constrains("return_date", "discharge_date_override", "bill_of_lading_id")
     def _check_return_date(self):
         today = fields.Date.context_today(self)
@@ -276,7 +375,7 @@ class Container(models.Model):
                 raise ValidationError(
                     "La fecha de devolución no puede ser futura."
                 )
-                
+
     @api.depends("discharge_date_override", "bill_of_lading_id.discharge_date")
     def _compute_discharge_date(self):
         for container in self:
