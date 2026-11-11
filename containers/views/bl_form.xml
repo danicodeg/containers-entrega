@@ -35,6 +35,8 @@
                                     <field name="discharge_date_override"/>
                                     <field name="discharge_date" readonly="1"/>
                                     <field name="return_date"/>
+                                    <field name="eir_filename" column_invisible="True"/>
+                                    <field name="eir_file" filename="eir_filename"/>
                                     <field name="calculation_ok" column_invisible="True"/>
                                     <field name="calculation_message"/>
                                     <field name="days_outside" invisible="not calculation_ok"/>

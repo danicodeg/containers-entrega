@@ -69,7 +69,8 @@ class Container(models.Model):
         store=True,
     )
     return_date = fields.Date(string="Fecha de devolución")
-        
+    eir_file = fields.Binary(string="Comprobante EIR", attachment=True)
+    eir_filename = fields.Char(string="Nombre del archivo EIR")
     days_outside = fields.Integer(
         string="Días afuera",
         compute="_compute_demurrage",
