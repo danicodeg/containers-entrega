@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bill_of_lading_tree" model="ir.ui.view">
+        <field name="name">containers.bill.of.lading.tree</field>
+        <field name="model">containers.bill.of.lading</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="shipping_line_id"/>
+                <field name="discharge_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_bill_of_lading_form" model="ir.ui.view">
+        <field name="name">containers.bill.of.lading.form</field>
+        <field name="model">containers.bill.of.lading</field>
+        <field name="arch" type="xml">
+            <form string="BL">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="customer_id"/>
+                        <field name="shipping_line_id"/>
+                        <field name="discharge_date"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Contenedores">
+                            <field name="container_ids">
+                                <tree editable="bottom" delete="false">
+                                    <field name="name"/>
+                                    <field name="container_type"/>
+                                    <field name="discharge_date_override"/>
+                                    <field name="discharge_date" readonly="1"/>
+                                    <field name="return_date"/>
+                                    <field name="calculation_ok" column_invisible="True"/>
+                                    <field name="calculation_message"/>
+                                    <field name="days_outside" invisible="not calculation_ok"/>
+                                    <field name="free_days" invisible="not calculation_ok"/>
+                                    <field name="delay_days" invisible="not calculation_ok"/>
+                                    <field name="shipping_amount_usd" invisible="not calculation_ok"/>
+                                    <field name="customer_amount_usd" invisible="not calculation_ok"/>
+                                    <field name="is_estimate"/>
+
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bill_of_lading" model="ir.actions.act_window">
+        <field name="name">BL</field>
+        <field name="res_model">containers.bill.of.lading</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_containers_root"
+              name="Control de contenedores"
+              groups="containers.group_container_operations,containers.group_container_billing"/>
+
+    <menuitem id="menu_bill_of_lading"
+              name="BL"
+              parent="menu_containers_root"
+              action="action_bill_of_lading"/>
+</odoo>

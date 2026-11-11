@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_bill_of_lading_operations,bill.of.lading.operations,model_containers_bill_of_lading,containers.group_container_operations,1,1,1,0
+access_container_operations,container.operations,model_containers_container,containers.group_container_operations,1,1,1,0
+access_bill_of_lading_billing,bill.of.lading.billing,model_containers_bill_of_lading,containers.group_container_billing,1,0,0,0
+access_container_billing,container.billing,model_containers_container,containers.group_container_billing,1,0,0,0
+
+access_tariff_operations,tariff.operations,model_containers_tariff,containers.group_container_operations,1,0,0,0
+access_tariff_tier_operations,tariff.tier.operations,model_containers_tariff_tier,containers.group_container_operations,1,0,0,0
+access_tariff_billing,tariff.billing,model_containers_tariff,containers.group_container_billing,1,1,1,0
+access_tariff_tier_billing,tariff.tier.billing,model_containers_tariff_tier,containers.group_container_billing,1,1,1,1
+
+access_customer_condition_operations,customer.condition.operations,model_containers_customer_condition,containers.group_container_operations,1,0,0,0
+access_customer_condition_billing,customer.condition.billing,model_containers_customer_condition,containers.group_container_billing,1,1,1,0

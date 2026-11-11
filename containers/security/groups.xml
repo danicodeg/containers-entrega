@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_containers" model="ir.module.category">
+        <field name="name">Control de contenedores</field>
+    </record>
+
+    <record id="group_container_operations" model="res.groups">
+        <field name="name">Operaciones</field>
+        <field name="category_id" ref="module_category_containers"/>
+    </record>
+
+    <record id="group_container_billing" model="res.groups">
+        <field name="name">Facturación</field>
+        <field name="category_id" ref="module_category_containers"/>
+    </record>
+</odoo>

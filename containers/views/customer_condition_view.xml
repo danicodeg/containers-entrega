@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_customer_condition_tree" model="ir.ui.view">
+        <field name="name">containers.customer.condition.tree</field>
+        <field name="model">containers.customer.condition</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="customer_id"/>
+                <field name="shipping_line_id"/>
+                <field name="extra_free_days"/>
+                <field name="administration_percentage"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_customer_condition_form" model="ir.ui.view">
+        <field name="name">containers.customer.condition.form</field>
+        <field name="model">containers.customer.condition</field>
+        <field name="arch" type="xml">
+            <form string="Condición del cliente">
+                <sheet>
+                    <group>
+                        <field name="customer_id"/>
+                        <field name="shipping_line_id"/>
+                        <field name="extra_free_days"/>
+                        <field name="administration_percentage"/>
+                    </group>
+                    <p>
+                        Los días libres extra aplican a esta naviera.
+                        El porcentaje de administración aplica al
+                        cliente con todas sus navieras.
+                    </p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_customer_condition" model="ir.actions.act_window">
+        <field name="name">Condiciones de clientes</field>
+        <field name="res_model">containers.customer.condition</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_customer_condition"
+              name="Condiciones de clientes"
+              parent="menu_containers_root"
+              action="action_customer_condition"
+              sequence="30"
+              groups="containers.group_container_operations,containers.group_container_billing"/>
+</odoo>

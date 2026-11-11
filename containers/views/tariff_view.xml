@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tariff_tree" model="ir.ui.view">
+        <field name="name">containers.tariff.tree</field>
+        <field name="model">containers.tariff</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="shipping_line_id"/>
+                <field name="container_type"/>
+                <field name="valid_from"/>
+                <field name="valid_to"/>
+                <field name="free_days"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_tariff_form" model="ir.ui.view">
+        <field name="name">containers.tariff.form</field>
+        <field name="model">containers.tariff</field>
+        <field name="arch" type="xml">
+            <form string="Tarifa de naviera">
+                <header>
+                    <button name="action_check_tiers"
+                            type="object"
+                            string="Comprobar tramos"
+                            class="oe_highlight"/>
+                </header>
+
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="shipping_line_id"/>
+                            <field name="container_type"/>
+                        </group>
+
+                        <group>
+                            <field name="valid_from"/>
+                            <field name="valid_to"/>
+                            <field name="free_days"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Tramos de demora">
+                            <p>
+                                Los tramos cuentan desde el primer día
+                                de demora, después de consumir los días
+                                libres. Usa 0 en el día final para
+                                indicar sin límite.
+                            </p>
+
+                            <field name="tier_ids">
+                                <tree editable="bottom">
+                                    <field name="day_from"/>
+                                    <field name="day_to"/>
+                                    <field name="daily_rate"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tariff" model="ir.actions.act_window">
+        <field name="name">Tarifas de navieras</field>
+        <field name="res_model">containers.tariff</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_tariff"
+              name="Tarifas"
+              parent="menu_containers_root"
+              action="action_tariff"
+              sequence="20"
+              groups="containers.group_container_operations,containers.group_container_billing"/>
+</odoo>
