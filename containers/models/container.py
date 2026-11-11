@@ -83,6 +83,15 @@ class Container(models.Model):
         store=True,
     )
     return_date = fields.Date(string="Fecha de devolución")
+    correction_ids = fields.One2many(
+        "containers.container.correction",
+        "container_id",
+        string="Solicitudes de corrección",
+    )
+    approved_return_date = fields.Date(
+        string="Fecha de devolución corregida",
+        compute="_compute_approved_return_date",
+    )
     eir_file = fields.Binary(string="Comprobante EIR", attachment=True)
     eir_filename = fields.Char(string="Nombre del archivo EIR")
 
@@ -151,6 +160,7 @@ class Container(models.Model):
         compute="_compute_demurrage",
     )
     @api.depends("discharge_date", "return_date", "invoiced_at")
+    
     def _compute_state(self):
         for container in self:
             if container.invoiced_at:
@@ -161,7 +171,52 @@ class Container(models.Model):
                 container.state = "outside"
             else:
                 container.state = "pending"
+                
+    @api.depends(
+        "correction_ids.state",
+        "correction_ids.reviewed_at",
+        "correction_ids.corrected_return_date",
+    )
+    
+    def _compute_approved_return_date(self):
+        for container in self:
+            approved = container.correction_ids.filtered(
+                lambda correction: correction.state == "approved"
+            )
+            latest = approved.sorted(
+                key=lambda correction: (
+                    correction.reviewed_at or correction.create_date,
+                    correction.id,
+                ),
+                reverse=True,
+            )[:1]
+            container.approved_return_date = latest.corrected_return_date 
+                      
+    def action_open_correction(self):
+        self.ensure_one()
+        self.check_access_rights("read")
+        self.check_access_rule("read")
 
+        if not self.env.user.has_group("containers.group_container_operations"):
+            raise AccessError("Solo Operaciones puede solicitar una corrección.")
+
+        if self.state != "invoiced":
+            raise ValidationError(
+                "Solo puedes solicitar correcciones para contenedores facturados."
+            )
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Solicitar corrección",
+            "res_model": "containers.container.correction",
+            "views": [(False, "form")],
+            "target": "new",
+            "context": {
+                **self.env.context,
+                "default_container_id": self.id,
+                "from_container": True,
+            },
+        }
     def action_mark_invoiced(self):
         self.ensure_one()
         self.check_access_rights("read")
@@ -206,7 +261,7 @@ class Container(models.Model):
 
         return super().write(vals)
 
-    def _get_demurrage_values(self, cutoff_date=None):
+    def _get_demurrage_values(self, cutoff_date=None, corrected_return_date=None):
         self.ensure_one()
 
         bl = self.bill_of_lading_id
@@ -222,7 +277,7 @@ class Container(models.Model):
             if cutoff_date
             else fields.Date.context_today(self)
         )
-        end_date = self.return_date or cutoff_date
+        end_date = corrected_return_date or self.return_date or cutoff_date
 
         if end_date < discharge_date:
             raise ValidationError(

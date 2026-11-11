@@ -25,6 +25,7 @@ Long description of module's purpose
         'security/groups.xml',
         'security/ir.model.access.csv',
         'views/bl_form.xml',
+        "views/container_correction_view.xml",
         'views/tariff_view.xml',
         'views/customer_condition_view.xml',
       #  'views/templates.xml',

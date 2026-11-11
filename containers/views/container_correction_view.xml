@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_container_correction_tree" model="ir.ui.view">
+        <field name="name">containers.container.correction.tree</field>
+        <field name="model">containers.container.correction</field>
+        <field name="arch" type="xml">
+            <tree string="Correcciones de contenedores" create="false">
+                <field name="container_id"/>
+                <field name="corrected_return_date"/>
+                <field name="create_uid" string="Solicitado por"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_container_correction_form" model="ir.ui.view">
+        <field name="name">containers.container.correction.form</field>
+        <field name="model">containers.container.correction</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud de corrección">
+                <sheet>
+                <header>
+        <button name="action_approve"
+            type="object"
+            string="Aprobar"
+            class="oe_highlight"
+            groups="containers.group_container_billing"
+            invisible="not id or state != 'pending'"/>
+        <button name="action_reject"
+            type="object"
+            string="Rechazar"
+            groups="containers.group_container_billing"
+            invisible="not id or state != 'pending'"/>
+               </header>
+                    <group>
+                        <field name="container_id"
+                               readonly="context.get('from_container')"
+                               force_save="1"
+                               options="{'no_create': True}"/>
+                        <field name="corrected_return_date"/>
+                        <field name="reason"/>
+                        <field name="eir_filename" invisible="True"/>
+                        <field name="eir_file" filename="eir_filename"/>
+                    </group>
+                    <group string="Revisión">
+                        <field name="state"/>
+                        <field name="review_note" readonly="1"/>
+                        <field name="reviewed_by_id"/>
+                        <field name="reviewed_at"/>
+                        <field name="adjusted_customer_amount_usd" invisible="state != 'approved'"/>
+                        <field name="customer_difference_usd" invisible="state != 'approved'"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_container_correction" model="ir.actions.act_window">
+        <field name="name">Correcciones</field>
+        <field name="res_model">containers.container.correction</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_container_correction"
+              name="Correcciones"
+              parent="menu_containers_root"
+              action="action_container_correction"
+              groups="containers.group_container_operations,containers.group_container_billing"/>
+</odoo>

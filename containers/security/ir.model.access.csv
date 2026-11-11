@@ -11,3 +11,6 @@ access_tariff_tier_billing,tariff.tier.billing,model_containers_tariff_tier,cont
 
 access_customer_condition_operations,customer.condition.operations,model_containers_customer_condition,containers.group_container_operations,1,0,0,0
 access_customer_condition_billing,customer.condition.billing,model_containers_customer_condition,containers.group_container_billing,1,1,1,0
+
+access_container_correction_operations,container.correction.operations,model_containers_container_correction,containers.group_container_operations,1,0,1,0
+access_container_correction_billing,container.correction.billing,model_containers_container_correction,containers.group_container_billing,1,0,0,0
