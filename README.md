@@ -43,7 +43,7 @@ Cómo trabajé los grupos y los filtros:
 Cuando trabajaba con Odoo Studio, cuando necesitaba definir quién podía acceder a algo, entraba a la parte técnica de Odoo y configuraba los permisos desde la interfaz. Por ejemplo, si tenía un grupo de empleados, usaba las reglas de registro y sus dominios para definir qué registros podían ver. En esta prueba fue nuevo para mí configurar los grupos y los permisos desde el código. En la carpeta “security” creé los grupos de Operaciones y Facturación y definí qué podía hacer cada uno. 
 Operaciones puede consultar las tarifas y registrar los contenedores, y Facturación puede modificar las tarifas y aprobar o rechazar las correcciones. Así cada persona puede trabajar con su propio usuario y con los permisos que necesita.
 Para los filtros, en Odoo Studio yo usaba el buscador. Escogía el campo, ponía una condición como “es igual a” y después seleccionaba el valor. Si quería buscar registros asignados a alguien, escogía el campo “Asignado a” y seleccionaba a la persona. Lo nuevo para mí fue usar esa misma lógica en código y dejar listos los tres filtros que pedía Marcela. Por ejemplo, para mostrar los contenedores vencidos que siguen afuera, puse dos condiciones en el dominio: que el estado sea Afuera y que el último día libre sea anterior a hoy.
-Usé IA como apoyo porque varias partes eran nuevas para mí, sobre todo los cálculos de demora y cómo llevar al código lo que antes hacía desde la interfaz. A medida que iba avanzando, probaba los cambios en Odoo para entender qué hacía cada parte y revisar si el resultado coincidía con lo que pedía la guía. 
+
 
 Preguntas que le haría al cliente antes de salir a producción:
 ¿El flujo desde que se registra un BL hasta que se factura el contenedor funciona como lo necesitan?
@@ -74,3 +74,5 @@ Lo que no alcancé a realizar:
 Las funcionalidades de deseable y extra.
 La que más me interesaba hacer era la alerta para Marcela para que le llegara cada mañana un aviso con los contenedores que vencen en los próximos dos días. Cuando trabajaba con Odoo Studio, ya había configurado acciones planificadas desde la interfaz. 
 Por eso pensé que para este caso se podía usar la misma idea y programar una acción planificada que hiciera esa revisión cada mañana, sin embargo me faltaría estudiar más para saber como colocarla dentro del modelo.
+
+Usé IA como apoyo en cada uno de los archivos porque realmente manejar con codigo los requisitos de esta prueba era nuevo para mí, sobre todo los cálculos de demora y cómo llevar al código lo que antes hacía desde la interfaz con Odoo Studio, pero a medida que iba avanzando, probaba los cambios en Odoo para entender qué hacía cada parte y revisar si el resultado coincidía con lo que pedía la guía. 
