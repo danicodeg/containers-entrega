@@ -8,7 +8,7 @@
    CREATE EXTENSION IF NOT EXISTS btree_gist;
    ```
 
-   Esta extensión permite que el módulo valide que los períodos de uso de un mismo contenedor no se solapen.
+   Esta extensión permite que el módulo valide que los períodos de uso de un mismo contenedor no se crucen.
 
 4. Abrir la terminal en la carpeta `odoo`, donde está `odoo-bin`, y activar el entorno de Python de Odoo. Ejecutar este comando en una sola línea, reemplazando `HOST`, `PUERTO`, `USUARIO` y `CONTRASEÑA` por los datos de conexión de su PostgreSQL:
 
