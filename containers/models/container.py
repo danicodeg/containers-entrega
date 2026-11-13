@@ -22,12 +22,12 @@ class BillOfLading(models.Model):
     container_ids = fields.One2many(
         "containers.container", "bill_of_lading_id", string="Contenedores"
     )
-
+#llama el metodo cuando se guarde la fecha general 
     @api.constrains("discharge_date")
     def _check_container_return_dates(self):
-        self.mapped("container_ids")._check_return_date()
+        self.mapped("container_ids")._check_return_date() 
 
-
+#se usa esta funcion para que no se pueda cambiar la fecha de descarga general si ya hay contenedores facturados
     def write(self, vals):
         protected_fields = {"customer_id", "shipping_line_id", "discharge_date"}
         if protected_fields.intersection(vals) and any(
@@ -44,6 +44,8 @@ class BillOfLading(models.Model):
 class Container(models.Model):
     _name = "containers.container"
     _description = "Container"
+
+#regla para decir a postgres que no pueden ser los mismos periodos de descarga y devolucion de un contenedor
     _sql_constraints = [
         (
             "no_overlapping_periods",
@@ -60,6 +62,7 @@ class Container(models.Model):
             "Este contenedor ya está registrado en un período que se cruza con estas fechas.",
         ),
     ]
+    #campos del contenedor en el bl
     name = fields.Char(string="Número de contenedor", required=True)
     bill_of_lading_id = fields.Many2one(
         "containers.bill.of.lading",
@@ -85,7 +88,11 @@ class Container(models.Model):
     )
     return_date = fields.Date(string="Fecha de devolución")
     
-    free_time_end_date = fields.Date(string="Último día libre", compute="_compute_free_time_end_date", search="_search_free_time_end_date",)
+    free_time_end_date = fields.Date(
+        string="Último día libre", 
+        compute="_compute_free_time_end_date", 
+        search="_search_free_time_end_date",
+    )
     
     correction_ids = fields.One2many(
         "containers.container.correction",
@@ -105,10 +112,10 @@ class Container(models.Model):
         copy=False,
     )
 
-    invoiced_values = fields.Json(
+    invoiced_values = fields.Json( 
         string="Cálculo al facturar",
         readonly=True,
-        copy=False,
+        copy=False, #hace que no se copie el campo al duplicar el registro
     )
 
     state = fields.Selection(
@@ -164,7 +171,7 @@ class Container(models.Model):
         compute="_compute_demurrage",
     )
     @api.depends("discharge_date", "return_date", "invoiced_at")
-    
+   #vuelva a calcular el estado si esos campos cambian  y segun el valor de esos campos se asigna un estado
     def _compute_state(self):
         for container in self:
             if container.invoiced_at:
@@ -197,7 +204,8 @@ class Container(models.Model):
             container.approved_return_date = latest.corrected_return_date 
             
     @api.depends("discharge_date", "free_days", "calculation_ok")
-    
+#para crear los filtros que en odoo se ven en la parte superior de la vista de lista
+
     def _compute_free_time_end_date(self):
         for container in self:
             if container.discharge_date and container.calculation_ok:
@@ -207,7 +215,6 @@ class Container(models.Model):
                 )
             else:
                 container.free_time_end_date = False
-
     def _search_free_time_end_date(self, operator, value):
         comparison_date = fields.Date.to_date(value)
         candidates = self.search([
@@ -254,14 +261,14 @@ class Container(models.Model):
 
         if self.state != "returned":
             raise ValidationError("Solo se puede facturar un contenedor devuelto.")
-
+#calcula la demora
         values = self._get_demurrage_values()
         super(Container, self.sudo()).write({
             "invoiced_at": fields.Datetime.now(),
             "invoiced_values": values,
         })
         return True
-
+#no permite que se pueda crear un contenedor con los campos de facturacion ya llenos
     @api.model_create_multi
     def create(self, vals_list):
         protected_fields = {"invoiced_at", "invoiced_values"}
@@ -269,7 +276,7 @@ class Container(models.Model):
             raise ValidationError("Usa el botón Marcar como facturado.")
 
         return super().create(vals_list)
-
+#aplica dos reglas dde seguridad para que no se pueda cambiar la fecha de facturacion ni los valores de facturacion y que si se quiere cambiar algun campo protegido de un contenedor facturado se tenga que hacer una correccion
     def write(self, vals):
         if {"invoiced_at", "invoiced_values"}.intersection(vals):
             raise ValidationError("Usa el botón Marcar como facturado.")
@@ -287,7 +294,7 @@ class Container(models.Model):
             )
 
         return super().write(vals)
-
+#calculo para la demora y el cobro al cliente y a la naviera
     def _get_demurrage_values(self, cutoff_date=None, corrected_return_date=None):
         self.ensure_one()
 
@@ -298,19 +305,20 @@ class Container(models.Model):
             raise ValidationError(
                 "Completa cliente, naviera y fecha de descarga para calcular."
             )
-
+#hasta que fecha que fecha de corte o fecha de devolucion corregida se va a calcular la demora
         cutoff_date = (
             fields.Date.to_date(cutoff_date)
             if cutoff_date
             else fields.Date.context_today(self)
         )
+    #escoge el primer valor que exista
         end_date = corrected_return_date or self.return_date or cutoff_date
-
+    #no se puede si la fecha de devolucion es menor a la fecha de descarga
         if end_date < discharge_date:
             raise ValidationError(
                 "La fecha de corte o devolución es anterior a la descarga."
             )
-
+    #me busca la tarifa que corresponda 
         tariff = self.env["containers.tariff"].search(
             [
                 ("shipping_line_id", "=", bl.shipping_line_id.id),
@@ -331,7 +339,7 @@ class Container(models.Model):
             raise ValidationError(
                 "Hay varias tarifas aplicables. Revisa sus vigencias."
             )
-
+#si hay dias extra, condiciones del cliente se suman a los dias libres 
         condition = self.env["containers.customer.condition"].search(
             [
                 ("customer_id", "=", bl.customer_id.id),
@@ -339,8 +347,7 @@ class Container(models.Model):
             ],
             limit=1,
         )
-
-        extra_days = condition.extra_free_days if condition else 0
+        extra_days = condition.extra_free_days if condition else 0 #si tiene condicion se suma sino es 0
         days_outside = (end_date - discharge_date).days + 1
         free_days = tariff.free_days + extra_days
         delay_days = max(0, days_outside - free_days)
@@ -349,12 +356,12 @@ class Container(models.Model):
         shipping_amount = usd.round(
             tariff._calculate_demurrage(delay_days)
         )
-
+#calcula el cobro al cliente segun el porcentaje de administracion
         percentage = bl.customer_id.administration_percentage
         customer_amount = usd.round(
             shipping_amount * (1 + percentage / 100)
         )
-
+#me trae los resultados de los calculos y si e s estimado o no
         return {
             "days_outside": days_outside,
             "free_days": free_days,
@@ -363,7 +370,7 @@ class Container(models.Model):
             "customer_amount_usd": customer_amount,
             "is_estimate": not bool(self.return_date),
         }
-
+#si cambia los campos se vuelve a calcular
     @api.depends(
         "invoiced_values",
         "discharge_date",
@@ -373,6 +380,7 @@ class Container(models.Model):
         "bill_of_lading_id.shipping_line_id",
         "bill_of_lading_id.customer_id.administration_percentage",
     )
+#si hay filtross, o si hay diferente zona horaria vuelve a  a calcular 
     @api.depends_context("demurrage_cutoff_date", "tz")
     def _compute_demurrage(self):
         for container in self:
@@ -408,23 +416,23 @@ class Container(models.Model):
         for container in self:
             number = container.name or ""
 
-            if not re.fullmatch(r"[A-Z]{3}[UJZ][0-9]{7}", number):
+            if not re.fullmatch(r"[A-Z]{3}[UJZ][0-9]{7}", number): #verifica que esas 3 letras sean mayusculas y que sea la ultima y 7 digitos
                 raise ValidationError(
                     "Escribe el número de contenedor en mayúsculas y sin espacios. "
                     "Debe tener 4 letras (la cuarta U, J o Z) y 7 dígitos."
                 )
 
-            total = 0
+            total = 0 #es el acumulador de la suma de los valores de las letras y los digitos multiplicados por 2 elevado a la posicion del caracter
             for position, character in enumerate(number[:10]):
                 value = (
                     int(character)
                     if character.isdigit()
-                    else ISO_LETTER_VALUES[character]
+                    else ISO_LETTER_VALUES[character] #si no entonces busque la equivalencia en el diccionario de letras a numeros
                 )
                 total += value * (2 ** position)
-
-            expected_digit = (total % 11) % 10
-            if int(number[-1]) != expected_digit:
+#divide la suma total entre 11 y luego el resultado entre 10 para obtener el digito de control esperado
+            expected_digit = (total % 11) % 10 
+            if int(number[-1]) != expected_digit: #si no coincide lance el error
                 raise ValidationError(
                     f"El dígito de control de {number} es incorrecto. "
                     f"El dígito esperado es {expected_digit}."
@@ -432,7 +440,7 @@ class Container(models.Model):
 
     @api.constrains("return_date", "discharge_date_override", "bill_of_lading_id")
     def _check_return_date(self):
-        today = fields.Date.context_today(self)
+        today = fields.Date.context_today(self)  
 
         for container in self:
             if not container.return_date:

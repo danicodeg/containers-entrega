@@ -25,7 +25,7 @@
                         <field name="shipping_line_id"/>
                         <field name="discharge_date"/>
                     </group>
-
+                </sheet>
                     <notebook>
                         <page string="Contenedores">
                             <field name="container_ids">
@@ -36,7 +36,8 @@
                                     <field name="discharge_date" readonly="1"/>
                                     <field name="return_date"/>
                                     <field name="approved_return_date" readonly="1"/>
-                                    <field name="state" readonly="1"/>           
+                                    <field name="state" readonly="1"/> 
+                                    <field name="invoiced_at" readonly="1"/>          
                                     <field name="eir_filename" column_invisible="True"/>
                                     <field name="eir_file" filename="eir_filename"/>
                                     <field name="calculation_ok" column_invisible="True"/>
