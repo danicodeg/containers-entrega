@@ -17,6 +17,10 @@
    ```
 
 5. Dejar la terminal abierta. Cuando Odoo termine de cargar, abrir (http://localhost:8069/web?db=odoo_entrega_test). En Ajustes>Usuarios y compañías>Usuarios, asignar al usuario de prueba los grupos Operaciones y Facturación. Guardar los cambios, recargar la página y abrir Control de contenedores desde el menú.
+6. Para las pruebas automatizadas, con el entorno de Python activo, ejecutar el mismo comando del paso 4, pero cambiando -i containers por "-u containers" y seleccionando la clase de pruebas:
+    ```powershell
+    python odoo-bin --db_host=HOST --db_port=PUERTO -r USUARIO -w "CONTRASEÑA" --addons-path="addons,RUTA_DEL_REPOSITORIO" -d odoo_entrega_test -u containers --test-tags="/containers:TestDemurrage" --stop-after-init
+   ```
 
 Modelo de datos:
 Para hacer el módulo, primero organicé las carpetas. En models dejé los campos, las relaciones y los cálculos. En views puse lo que se muestra en Odoo, como los formularios, las listas y los filtros. También usé security para los permisos de Operaciones y Facturación, y tests para las pruebas del cálculo de demoras.
