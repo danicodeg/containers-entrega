@@ -25,7 +25,6 @@
                         <field name="shipping_line_id"/>
                         <field name="discharge_date"/>
                     </group>
-                </sheet>
                     <notebook>
                         <page string="Contenedores">
                             <field name="container_ids">
