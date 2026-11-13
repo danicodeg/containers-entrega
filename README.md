@@ -1,8 +1,8 @@
 #Cómo instalar el módulo:
 
 1. Tener una instalación de Odoo 17 Community conectada a PostgreSQL.
-2. Descargar el repositorio. Guárdelo en cualquier carpeta de su equipo. Al abrir lo que descargó, verá una carpeta llamada containers. En el comando de instalación, agregue a --addons-path la ruta de la carpeta que contiene containers, junto con las rutas que ya usa Odoo.
-3. En PostgreSQL, crear una base vacía llamada `odoo_entrega_test`. Seleccionar como propietario el usuario de PostgreSQL que usa Odoo. En esa misma base, ejecutar esta consulta desde pgAdmin:
+2. Descargar el repositorio. Guardar en cualquier carpeta del equipo. Al abrir lo que descargó, verá una carpeta llamada containers. En el comando de instalación, agregue a --addons-path la ruta de la carpeta que contiene containers, junto con las rutas que ya usa Odoo.
+3. En PostgreSQL, crear una base vacía llamada "odoo_entrega_test". Seleccionar como propietario el usuario de PostgreSQL que usa Odoo. En esa misma base, ejecutar esta consulta desde pgAdmin:
 
    ```sql
    CREATE EXTENSION IF NOT EXISTS btree_gist;
