@@ -3,11 +3,10 @@ from odoo.tests import TransactionCase
 
 
 class TestDemurrage(TransactionCase):
-
+#este metodo setUpClass es para configurar los datos de prueba y asi es como se inicializa, solo se ejecuta una vez al principio
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-
         (
             cls.atlantico,
             cls.mar_del_sur,
@@ -105,8 +104,8 @@ class TestDemurrage(TransactionCase):
         })
 
     def test_demurrage_cases_1_to_8(self):
-        # Cada resultado contiene días afuera, libres, de demora,
-        # cobro de naviera, cobro al cliente y si es estimado.
+        # contiene días afuera, libres, de demora,
+        # cobro de naviera, cobro al cliente y no es estimado si se devolvió
         cases = [
             (
                 "TSTU9000015", self.importadora, self.atlantico, "40HC",
@@ -141,17 +140,16 @@ class TestDemurrage(TransactionCase):
                 "2026-09-14", "2026-09-14", (1, 7, 0, 0, 0, False),
             ),
         ]
-
+#aqui se recorren los casos de prueba se emplea subTest para que cada caso se ejecute de manera independiente y se pueda identificar cual falla 
         for case_number, case in enumerate(cases, start=1):
             with self.subTest(case=case_number):
                 *container_data, expected = case
                 container = self._create_container(*container_data)
-
+#aqui cuando no se ha devuelto el contenedor, se establece una fecha de corte para el cálculo de demoras
                 if case_number == 5:
                     container = container.with_context(
                         demurrage_cutoff_date="2026-09-20",
                     )
-
                 self.assertTrue(
                     container.calculation_ok, container.calculation_message,
                 )
@@ -164,14 +162,14 @@ class TestDemurrage(TransactionCase):
                         container.customer_amount_usd,
                         container.is_estimate,
                     ),
-                    expected,
+                    expected, #el expected la tupla que contiene los valores esperados y si son los mismos con los calculados por el sistema, la prueba pasa, de lo contrario falla
                 )
-
+#caso 9
     def test_case_9_missing_tariff(self):
         container = self._create_container(
             "TSTU9000099", self.frutas, self.mar_del_sur, "40RF",
             "2026-08-03", "2026-08-20",
         )
-
+#me comprueba que es falso, porque no hay tarifa para esa naviera y tipo de contenedor, por lo que arroja el popup de error
         self.assertFalse(container.calculation_ok)
         self.assertIn("Falta una tarifa", container.calculation_message)
